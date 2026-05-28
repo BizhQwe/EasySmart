@@ -1,0 +1,71 @@
+﻿@page "/profile"
+
+@using EasySmart.Services.Contracts
+@inject IUserSession Session
+@inject NavigationManager NavManager
+
+<div style="display: flex; flex-direction: column; align-items: center; padding: 40px 16px;">
+
+    <div style="width: 100%; max-width: 600px;">
+        <FluentLabel Typo="Typography.H4" Style="margin-bottom: 24px; text-align: center; display: block;">
+            Профиль
+        </FluentLabel>
+
+        @if (!Session.IsLoggedIn)
+        {
+            <FluentMessageBar Intent="MessageIntent.Warning">
+                Вы не авторизованы.
+            </FluentMessageBar>
+        }
+        else
+        {
+            <FluentCard Style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+                    <FluentIcon Value="@(new Icons.Regular.Size48.Person())" Color="Color.Accent" />
+                    <div>
+                        <FluentLabel Typo="Typography.H5" Style="margin: 0;">@Session.CurrentUser?.FullName</FluentLabel>
+                        <FluentLabel Style="opacity: 0.7;">Роль: @Session.CurrentUser?.Role.ToString()</FluentLabel>
+                    </div>
+                </div>
+
+                <FluentDivider Style="width: 100%;" />
+
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <FluentTextField Value="@Session.CurrentUser?.Login" Label="Логин" ReadOnly="@true" Style="flex: 1; min-width: 200px;" />
+                    <FluentTextField Value="@Session.CurrentUser?.Email" Label="Email" ReadOnly="@true" Style="flex: 1; min-width: 200px;" />
+                </div>
+
+                <div>
+                    <FluentTextField Value="@Session.CurrentUser?.Phone" Label="Телефон" ReadOnly="@true" Style="width: 100%;" />
+                </div>
+
+                <FluentDivider Style="width: 100%; margin-top: 8px;" />
+
+                <FluentButton Appearance="Appearance.Stealth"
+                              IconStart="@(new Icons.Regular.Size20.SignOut())"
+                              OnClick="Logout"
+                              Style="align-self: flex-start; color: var(--error);">
+                    Выйти из аккаунта
+                </FluentButton>
+
+            </FluentCard>
+        }
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!Session.IsLoggedIn)
+        {
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    private void Logout()
+    {
+        Session.EndSession();
+        NavManager.NavigateTo("/");
+    }
+}

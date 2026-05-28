@@ -1,0 +1,106 @@
+﻿@page "/register"
+
+@using EasySmart.Services.Models
+@using EasySmart.Services.Contracts
+@using EasySmart.Data.Entities
+@inject IUserService UserService
+@inject NavigationManager NavManager
+
+<div style="display: flex; justify-content: center; align-items: center; min-height: 70vh; padding: 20px 0;">
+    <FluentCard Style="padding: 32px; width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 16px;">
+
+        <FluentLabel Typo="Typography.H4" Style="text-align: center; margin-bottom: 8px;">
+            Регистрация
+        </FluentLabel>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <FluentMessageBar Intent="MessageIntent.Error" AllowDismiss="false">
+                @_errorMessage
+            </FluentMessageBar>
+        }
+
+        <EditForm Model="@_registerModel" OnValidSubmit="HandleRegister">
+            <DataAnnotationsValidator />
+
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <FluentTextField @bind-Value="_registerModel.Login" Label="Логин *" Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _registerModel.Login)" Style="color: var(--error); font-size: 0.8rem;" />
+                </div>
+
+                <div style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <FluentTextField TextFieldType="TextFieldType.Password" @bind-Value="_registerModel.Password" Label="Пароль *" Style="width: 100%;" />
+                        <ValidationMessage For="@(() => _registerModel.Password)" Style="color: var(--error); font-size: 0.8rem;" />
+                    </div>
+                    <div style="flex: 1;">
+                        <FluentTextField TextFieldType="TextFieldType.Password" @bind-Value="_registerModel.ConfirmPassword" Label="Повторите пароль *" Style="width: 100%;" />
+                        <ValidationMessage For="@(() => _registerModel.ConfirmPassword)" Style="color: var(--error); font-size: 0.8rem;" />
+                    </div>
+                </div>
+
+                <div>
+                    <FluentTextField @bind-Value="_registerModel.FullName" Label="ФИО *" Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _registerModel.FullName)" Style="color: var(--error); font-size: 0.8rem;" />
+                </div>
+
+                <div style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <FluentTextField @bind-Value="_registerModel.Email" Label="Email *" Style="width: 100%;" />
+                        <ValidationMessage For="@(() => _registerModel.Email)" Style="color: var(--error); font-size: 0.8rem;" />
+                    </div>
+                    <div style="flex: 1;">
+                        <FluentTextField @bind-Value="_registerModel.Phone" Label="Телефон" Style="width: 100%;" />
+                    </div>
+                </div>
+
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%; margin-top: 16px;" Loading="@_isLoading">
+                    Зарегистрироваться
+                </FluentButton>
+            </div>
+        </EditForm>
+
+        <FluentDivider Style="width: 100%; margin: 16px 0;" />
+
+        <div style="text-align: center;">
+            <FluentLabel>Уже есть аккаунт?</FluentLabel>
+            <FluentAnchor Href="/login" Appearance="Appearance.Stealth">Войти</FluentAnchor>
+        </div>
+
+    </FluentCard>
+</div>
+
+@code {
+    private RegisterModel _registerModel = new();
+    private string _errorMessage = string.Empty;
+    private bool _isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        _errorMessage = string.Empty;
+        _isLoading = true;
+
+        var newUser = new User
+        {
+            Login = _registerModel.Login,
+            Password = _registerModel.Password,
+            FullName = _registerModel.FullName,
+            Email = _registerModel.Email,
+            Phone = _registerModel.Phone
+        };
+
+        var isSuccess = await UserService.RegisterAsync(newUser);
+
+        if (isSuccess)
+        {
+            NavManager.NavigateTo("/login");
+        }
+        else
+        {
+            _errorMessage = "Пользователь с таким логином уже существует или произошла ошибка БД.";
+        }
+
+        _isLoading = false;
+    }
+}

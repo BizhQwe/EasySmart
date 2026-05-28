@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\Images\Icons\EasySmart-Icon-128.png" />
+    <Content Remove="wwwroot\Images\Icons\EasySmart-Icon-16.png" />
+    <Content Remove="wwwroot\Images\Icons\EasySmart-Icon-24.png" />
+    <Content Remove="wwwroot\Images\Icons\EasySmart-Icon-256.png" />
+    <Content Remove="wwwroot\Images\Icons\EasySmart-Icon-32.png" />
+    <Content Remove="wwwroot\Images\Icons\EasySmart-Icon-48.png" />
+    <Content Remove="wwwroot\Images\Icons\EasySmart-Icon-64.png" />
+    <Content Remove="wwwroot\Images\Products\aqara-door.png" />
+    <Content Remove="wwwroot\Images\Products\aqara-m2.png" />
+    <Content Remove="wwwroot\Images\Products\philips-e27.png" />
+    <Content Remove="wwwroot\Images\Products\xiaomi-s10.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components" Version="4.14.2" />
+    <PackageReference Include="Microsoft.FluentUI.AspNetCore.Components.Icons" Version="4.14.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="wwwroot\Images\Icons\EasySmart-Icon-128.png" />
+    <Resource Include="wwwroot\Images\Icons\EasySmart-Icon-16.png" />
+    <Resource Include="wwwroot\Images\Icons\EasySmart-Icon-24.png" />
+    <Resource Include="wwwroot\Images\Icons\EasySmart-Icon-256.png" />
+    <Resource Include="wwwroot\Images\Icons\EasySmart-Icon-32.png" />
+    <Resource Include="wwwroot\Images\Icons\EasySmart-Icon-48.png" />
+    <Resource Include="wwwroot\Images\Icons\EasySmart-Icon-64.png" />
+    <Resource Include="wwwroot\Images\Products\aqara-door.png" />
+    <Resource Include="wwwroot\Images\Products\aqara-m2.png" />
+    <Resource Include="wwwroot\Images\Products\philips-e27.png" />
+    <Resource Include="wwwroot\Images\Products\xiaomi-s10.png" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,51 @@
+﻿@page "/admin"
+@using EasySmart.Data.Enums
+@using EasySmart.Services.Contracts
+@inject IUserSession Session
+
+<FluentLabel Typo="Typography.H4" Style="margin-bottom: 24px; display: block;">
+    Панель Администратора
+</FluentLabel>
+
+@if (Session.CurrentUser?.Role != UserRole.Administrator)
+{
+    <FluentMessageBar Intent="MessageIntent.Error">У вас нет прав для просмотра этой страницы.</FluentMessageBar>
+}
+else
+{
+    <FluentTabs @bind-ActiveTabId="_activeTabId">
+
+        <FluentTab Id="tab-products" Label="Товары">
+            @if (_activeTabId == "tab-products")
+            {
+                <AdminProducts />
+            }
+        </FluentTab>
+
+        <FluentTab Id="tab-orders" Label="Заказы">
+            @if (_activeTabId == "tab-orders")
+            {
+                <AdminOrders />
+            }
+        </FluentTab>
+
+        <FluentTab Id="tab-categories" Label="Категории">
+            @if (_activeTabId == "tab-categories")
+            {
+                <AdminCategories />
+            }
+        </FluentTab>
+
+        <FluentTab Id="tab-manufacturers" Label="Бренды">
+            @if (_activeTabId == "tab-manufacturers")
+            {
+                <AdminManufacturers />
+            }
+        </FluentTab>
+
+    </FluentTabs>
+}
+
+@code {
+    private string _activeTabId = "tab-products";
+}

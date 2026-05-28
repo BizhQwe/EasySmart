@@ -1,0 +1,64 @@
+﻿@using EasySmart.Data.Entities
+@using EasySmart.Services.Contracts
+
+@inject IProductService ProductService
+
+<div style="padding: 16px 0; display: flex; gap: 24px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px;">
+        <FluentDataGrid Items="@_categories.AsQueryable()">
+            <PropertyColumn Property="@(c => c.Id)" Title="ID" />
+            <PropertyColumn Property="@(c => c.Name)" Title="Название" />
+            <TemplateColumn Title="Действия">
+                <FluentStack VerticalAlignment="VerticalAlignment.Center">
+                    <FluentButton Appearance="Appearance.Stealth" Style="height: 20px;"  OnClick="() => _editingCategory = context">Ред.</FluentButton>
+                    <FluentButton Appearance="Appearance.Stealth" Style="height: 20px; color: red;" OnClick="() => DeleteCategoryAsync(context.Id)">Удалить</FluentButton>
+                </FluentStack>>
+            </TemplateColumn>
+        </FluentDataGrid>
+    </div>
+    <div style="width: 300px;">
+        <FluentCard>
+            <FluentLabel Typo="Typography.H6">@(_editingCategory.Id == 0 ? "Добавить" : "Редактировать")</FluentLabel>
+            <FluentTextField @bind-Value="_editingCategory.Name" Label="Название категории" Style="width:100%; margin-top:8px;" />
+            <div style="margin-top: 16px; display: flex; gap: 8px;">
+                <FluentButton Appearance="Appearance.Accent" OnClick="SaveCategoryAsync">Сохранить</FluentButton>
+                <FluentButton OnClick="() => _editingCategory = new Category()">Очистить</FluentButton>
+            </div>
+        </FluentCard>
+    </div>
+</div>
+
+@code {
+    private List<Category> _categories = new();
+    private Category _editingCategory = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _categories = await ProductService.GetCategoriesAsync();
+    }
+
+    private async Task SaveCategoryAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editingCategory.Name))
+            return;
+
+        if (_editingCategory.Id == 0)
+            await ProductService.CreateCategoryAsync(_editingCategory);
+        else
+            await ProductService.UpdateCategoryAsync(_editingCategory);
+
+        _editingCategory = new Category();
+        await LoadDataAsync();
+    }
+
+    private async Task DeleteCategoryAsync(int id)
+    {
+        await ProductService.DeleteCategoryAsync(id);
+        await LoadDataAsync();
+    }
+}

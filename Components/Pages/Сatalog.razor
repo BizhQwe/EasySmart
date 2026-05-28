@@ -1,0 +1,155 @@
+﻿@page "/"
+@page "/catalog"
+
+@using EasySmart.Data.Entities
+@using EasySmart.Services.Contracts
+@using EasySmart.Services.Models
+
+@inject IProductService ProductService
+
+<FluentLabel Typo="Typography.H4" Style="margin-bottom: 24px; display: block;">
+    Каталог бытовой техники
+</FluentLabel>
+
+<div style="display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;">
+
+    <FluentCard Style="min-width: 280px; width: 25%; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <FluentLabel Typo="Typography.H6" Style="font-weight: bold; margin-bottom: 8px;">
+            Фильтры
+        </FluentLabel>
+
+        <div>
+            <FluentSearch @bind-Value="_filter.SearchQuery"
+                          Placeholder="Поиск по названию или артикулу..."
+                          Style="width: 100%;"
+                          @onkeyup="HandleKeyUp" />
+        </div>
+
+        <div>
+            <FluentSelect TOption="string" @bind-Value="_selectedCategoryId" Label="Категория" Style="width: 100%;">
+                <FluentOption TOption="string" Value="">Все категории</FluentOption>
+                @foreach (var cat in _categories)
+                {
+                    <FluentOption TOption="string" Value="@cat.Id.ToString()">@cat.Name</FluentOption>
+                }
+            </FluentSelect>
+        </div>
+
+        <div>
+            <FluentSelect TOption="string" @bind-Value="_selectedManufacturerId" Label="Производитель" Style="width: 100%;">
+                <FluentOption TOption="string" Value="">Все производители</FluentOption>
+                @foreach (var m in _manufacturers)
+                {
+                    <FluentOption TOption="string" Value="@m.Id.ToString()">@m.Name</FluentOption>
+                }
+            </FluentSelect>
+        </div>
+
+        <div>
+            <FluentLabel Style="margin-bottom: 4px;">Цена (руб.)</FluentLabel>
+            <div style="display: flex; gap: 8px;">
+                <FluentNumberField @bind-Value="_filter.MinPrice" Placeholder="От" Style="width: 50%;" />
+                <FluentNumberField @bind-Value="_filter.MaxPrice" Placeholder="До" Style="width: 50%;" />
+            </div>
+        </div>
+
+        <div>
+            <FluentTextField @bind-Value="_filter.Power" Label="Мощность" Placeholder="Например: 2000 Вт" Style="width: 100%;" />
+        </div>
+
+        <div>
+            <FluentTextField @bind-Value="_filter.Dimensions" Label="Габариты" Placeholder="Например: 60x60x85 см" Style="width: 100%;" />
+        </div>
+
+        <FluentDivider Style="width: 100%; margin: 8px 0;" />
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <FluentButton Appearance="Appearance.Accent" OnClick="ApplyFiltersAsync" Style="width: 100%;" Loading="@_isLoading">
+                Применить
+            </FluentButton>
+            <FluentButton Appearance="Appearance.Stealth" OnClick="ClearFiltersAsync" Style="width: 100%;">
+                Сбросить фильтры
+            </FluentButton>
+        </div>
+    </FluentCard>
+
+    <div style="flex: 1; min-width: 300px;">
+        @if (_isLoading)
+        {
+            <div style="display: flex; justify-content: center; padding: 40px;">
+                <FluentProgressRing />
+            </div>
+        }
+        else if (_products == null || !_products.Any())
+        {
+            <FluentCard Style="padding: 32px; text-align: center;">
+                <FluentIcon Value="@(new Icons.Regular.Size32.Search())" Style="margin-bottom: 16px; opacity: 0.5;" />
+                <FluentLabel Typo="Typography.H6">Товары не найдены</FluentLabel>
+                <FluentLabel>Попробуйте изменить параметры фильтрации или поисковый запрос.</FluentLabel>
+            </FluentCard>
+        }
+        else
+        {
+            <FluentGrid Spacing="3">
+                @foreach (var product in _products)
+                {
+                    <FluentGridItem xs="12" sm="12" md="6" lg="6" xl="4">
+                        <ProductCard Product="product" />
+                    </FluentGridItem>
+                }
+            </FluentGrid>
+        }
+    </div>
+
+</div>
+
+@code {
+    private List<Product>? _products;
+    private List<Category> _categories = new();
+    private List<Manufacturer> _manufacturers = new();
+
+    private ProductFilterParams _filter = new();
+    private string? _selectedCategoryId = "";
+    private string? _selectedManufacturerId = "";
+
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = await ProductService.GetCategoriesAsync();
+        _manufacturers = await ProductService.GetManufacturersAsync();
+
+        await ApplyFiltersAsync();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+
+        _filter.CategoryId = int.TryParse(_selectedCategoryId, out var cid) ? cid : null;
+        _filter.ManufacturerId = int.TryParse(_selectedManufacturerId, out var mid) ? mid : null;
+
+        _products = await ProductService.GetFilteredProductsAsync(_filter);
+
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        _filter = new ProductFilterParams();
+        _selectedCategoryId = "";
+        _selectedManufacturerId = "";
+
+        await ApplyFiltersAsync();
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await ApplyFiltersAsync();
+        }
+    }
+}

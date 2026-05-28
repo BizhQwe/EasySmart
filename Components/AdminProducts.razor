@@ -1,0 +1,147 @@
+﻿@using EasySmart.Data.Entities
+@using EasySmart.Services.Contracts
+@using Microsoft.AspNetCore.Hosting
+@using System.IO
+
+@inject IProductService ProductService
+@inject IWebHostEnvironment Env
+
+<div style="padding: 16px 0;">
+    @if (_editingProduct != null)
+    {
+        <FluentCard Style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <FluentLabel Typo="Typography.H6">@(_editingProduct.Id == 0 ? "Новый товар" : "Редактирование товара")</FluentLabel>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <FluentTextField @bind-Value="_editingProduct.Name" Label="Название" />
+                <FluentTextField @bind-Value="_editingProduct.Article" Label="Артикул" />
+                <FluentTextField @bind-Value="_editingProduct.Model" Label="Модель" />
+
+                <FluentSelect TOption="string" @bind-Value="CategoryIdStr" Label="Категория">
+                    <FluentOption TOption="string" Value="0">Выберите...</FluentOption>
+                    @foreach (var c in _categories)
+                    {
+                        <FluentOption TOption="string" Value="@c.Id.ToString()">@c.Name</FluentOption>
+                    }
+                </FluentSelect>
+
+                <FluentSelect TOption="string" @bind-Value="ManufacturerIdStr" Label="Производитель">
+                    <FluentOption TOption="string" Value="0">Выберите...</FluentOption>
+                    @foreach (var m in _manufacturers)
+                    {
+                        <FluentOption TOption="string" Value="@m.Id.ToString()">@m.Name</FluentOption>
+                    }
+                </FluentSelect>
+
+                <FluentNumberField TValue="decimal" @bind-Value="_editingProduct.Price" Label="Цена (руб.)" />
+
+                <FluentTextField @bind-Value="_editingProduct.Power" Label="Мощность" />
+                <FluentTextField @bind-Value="_editingProduct.Dimensions" Label="Габариты" />
+            </div>
+
+            <FluentTextArea @bind-Value="_editingProduct.Description" Label="Описание" Rows="3" />
+
+            <div>
+                <FluentLabel>Изображение товара:</FluentLabel>
+                <InputFile OnChange="HandleImageUpload" accept="image/*" />
+                @if (!string.IsNullOrEmpty(_editingProduct.Image))
+                {
+                    <div style="margin-top: 8px;">
+                        <img src="@_editingProduct.Image" width="100" />
+                    </div>
+                }
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <FluentButton Appearance="Appearance.Accent" OnClick="SaveProductAsync">Сохранить</FluentButton>
+                <FluentButton OnClick="() => _editingProduct = null">Отмена</FluentButton>
+            </div>
+        </FluentCard>
+    }
+    else
+    {
+        <FluentButton Appearance="Appearance.Accent" OnClick="() => _editingProduct = new Product()" Style="margin-bottom: 16px;">
+            Добавить товар
+        </FluentButton>
+        <FluentDataGrid Items="@_products.AsQueryable()" Pagination="@_pagination">
+            <PropertyColumn Property="@(p => p.Article)" Title="Артикул" />
+            <PropertyColumn Property="@(p => p.Name)" Title="Название" />
+            <PropertyColumn Property="@(p => p.Price)" Title="Цена" />
+            <TemplateColumn Title="Действия">
+                <FluentStack VerticalAlignment="VerticalAlignment.Center">
+                    <FluentButton Appearance="Appearance.Stealth" Style="height: 20px;" OnClick="() => _editingProduct = context">Ред.</FluentButton>
+                    <FluentButton Appearance="Appearance.Stealth" Style="color: red; height: 20px;" OnClick="() => DeleteProductAsync(context.Id)">Удалить</FluentButton>
+                </FluentStack>
+            </TemplateColumn>
+        </FluentDataGrid>
+        <FluentPaginator State="@_pagination" />
+    }
+</div>
+
+@code {
+    private List<Product> _products = new();
+    private List<Category> _categories = new();
+    private List<Manufacturer> _manufacturers = new();
+    private Product? _editingProduct;
+    private PaginationState _pagination = new PaginationState { ItemsPerPage = 10 };
+
+    private string CategoryIdStr
+    {
+        get => _editingProduct?.CategoryId.ToString() ?? "0";
+        set { if (_editingProduct != null && int.TryParse(value, out int id)) _editingProduct.CategoryId = id; }
+    }
+
+    private string ManufacturerIdStr
+    {
+        get => _editingProduct?.ManufacturerId.ToString() ?? "0";
+        set { if (_editingProduct != null && int.TryParse(value, out int id)) _editingProduct.ManufacturerId = id; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _products = await ProductService.GetAllProductsAsync();
+        _categories = await ProductService.GetCategoriesAsync();
+        _manufacturers = await ProductService.GetManufacturersAsync();
+    }
+
+    private async Task SaveProductAsync()
+    {
+        if (_editingProduct!.Id == 0)
+            await ProductService.CreateProductAsync(_editingProduct);
+        else
+            await ProductService.UpdateProductAsync(_editingProduct);
+
+        _editingProduct = null;
+        await LoadDataAsync();
+    }
+
+    private async Task DeleteProductAsync(int id)
+    {
+        await ProductService.DeleteProductAsync(id);
+        await LoadDataAsync();
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var fileName = $"{Guid.NewGuid()}_{file.Name}";
+            var folderPath = Path.Combine(Env.WebRootPath, "images", "products");
+            Directory.CreateDirectory(folderPath);
+
+            var filePath = Path.Combine(folderPath, fileName);
+            using var stream = file.OpenReadStream(10 * 1024 * 1024);
+            using var fs = new FileStream(filePath, FileMode.Create);
+            await stream.CopyToAsync(fs);
+
+            if (_editingProduct != null)
+                _editingProduct.Image = $"/images/products/{fileName}";
+        }
+    }
+}

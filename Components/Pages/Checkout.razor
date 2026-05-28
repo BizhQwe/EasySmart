@@ -1,0 +1,183 @@
+﻿@page "/checkout"
+
+@using EasySmart.Services.Contracts
+@using EasySmart.Services.Models
+
+@inject ICartService CartService
+@inject IOrderService OrderService
+@inject NavigationManager NavManager
+
+
+<FluentLabel Typo="Typography.H4" Style="margin-bottom: 24px; display: block;">
+    Оформление заказа
+</FluentLabel>
+
+<div style="max-width: max(); margin: 0 auto;">
+
+    @if (_isOrderPlaced)
+    {
+        <FluentCard Style="padding: 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <FluentIcon Value="@(new Icons.Regular.Size32.CheckmarkCircle())" Color="Color.Success" Style="width: 64px; height: 64px;" />
+            <FluentLabel Typo="Typography.H5" Style="font-weight: bold;">Заказ успешно оформлен!</FluentLabel>
+            <FluentLabel>Спасибо за покупку. Информация о заказе сохранена в базе данных.</FluentLabel>
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(() => NavManager.NavigateTo("/catalog"))">
+                Вернуться в каталог
+            </FluentButton>
+        </FluentCard>
+    }
+    else if (CartService.Items.Count == 0)
+    {
+        <FluentCard Style="padding: 32px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <FluentIcon Value="@(new Icons.Regular.Size24.Cart())" Style="width: 64px; height: 64px; opacity: 0.5;" />
+            <FluentLabel Typo="Typography.H6">Ваша корзина пуста</FluentLabel>
+            <FluentButton Appearance="Appearance.Neutral" OnClick="@(() => NavManager.NavigateTo("/catalog"))">
+                Перейти к покупкам
+            </FluentButton>
+        </FluentCard>
+    }
+    else
+    {
+        <FluentGrid Spacing="3">
+
+            <FluentGridItem xs="12" md="7">
+                <FluentCard Style="padding: 20px;">
+                    <FluentLabel Typo="Typography.H6" Style="margin-bottom: 16px; font-weight: bold;">
+                        Данные получателя
+                    </FluentLabel>
+
+                    <EditForm Model="@_orderForm" OnValidSubmit="HandleValidSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div style="display: flex; flex-direction: column; gap: 16px;">
+
+                            <div>
+                                <FluentTextField @bind-Value="_orderForm.ContactName" Label="ФИО получателя *" Style="width: 100%;" />
+                                <ValidationMessage For="@(() => _orderForm.ContactName)" Style="color: var(--error); font-size: 0.8rem; margin-top: 4px;" />
+                            </div>
+
+                            <div>
+                                <FluentTextField @bind-Value="_orderForm.Phone" Label="Телефон *" Style="width: 100%;" Placeholder="+7 (999) 000-00-00" />
+                                <ValidationMessage For="@(() => _orderForm.Phone)" Style="color: var(--error); font-size: 0.8rem; margin-top: 4px;" />
+                            </div>
+
+                            <div>
+                                <FluentSelect TOption="string" @bind-Value="_orderForm.DeliveryMethod" Label="Способ доставки *" Style="width: 100%;">
+                                    <FluentOption TOption="string" Value="@("Доставка курьером")">Доставка курьером</FluentOption>
+                                    <FluentOption TOption="string" Value="@("Самовывоз")">Самовывоз из магазина</FluentOption>
+                                    <FluentOption TOption="string" Value="@("Почта / СДЭК")">Доставка в пункт выдачи (СДЭК/Почта)</FluentOption>
+                                </FluentSelect>
+                            </div>
+
+                            <div>
+                                <FluentTextArea @bind-Value="_orderForm.DeliveryAddress" Label="Адрес доставки *" Style="width: 100%;" Rows="3" Placeholder="Город, улица, дом, квартира..." />
+                                <ValidationMessage For="@(() => _orderForm.DeliveryAddress)" Style="color: var(--error); font-size: 0.8rem; margin-top: 4px;" />
+                            </div>
+
+                            <div style="margin-top: 12px; display: flex; gap: 12px;">
+                                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="padding: 0 24px;" Loading="@_isSubmitting">
+                                    Подтвердить заказ
+                                </FluentButton>
+                                <FluentButton Appearance="Appearance.Stealth" OnClick="@(() => NavManager.NavigateTo("/catalog"))">
+                                    Назад в каталог
+                                </FluentButton>
+                            </div>
+
+                        </div>
+                    </EditForm>
+                </FluentCard>
+            </FluentGridItem>
+
+            <FluentGridItem xs="12" md="5">
+                <FluentCard Style="padding: 20px; display: flex; flex-direction: column; height: 100%;">
+                    <FluentLabel Typo="Typography.H6" Style="margin-bottom: 16px; font-weight: bold;">
+                        Ваш заказ
+                    </FluentLabel>
+
+                    <div style="flex-grow: 1; overflow-y: auto; max-height: 400px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                        @foreach (var item in CartService.Items)
+                        {
+                            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--neutral-stroke-layer-rest); padding-bottom: 12px;">
+                                <div style="display: flex; align-items: center; gap: 12px; max-width: 70%;">
+                                    <img src="@item.Product.Image" alt="@item.Product.Name" style="width: 48px; height: 48px; object-fit: contain; border-radius: 4px;" />
+                                    <div style="display: flex; flex-direction: column;">
+                                        <span style="font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            @item.Product.Name
+                                        </span>
+                                        <span style="font-size: 0.85rem; opacity: 0.7;">
+                                            @item.Quantity шт. × @item.Product.Price.ToString("N0") руб.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: bold; font-size: 0.95rem;">
+                                        @((item.Product.Price * item.Quantity).ToString("N0")) руб.
+                                    </span>
+                                    <FluentButton Appearance="Appearance.Stealth"
+                                                  IconStart="@(new Icons.Regular.Size16.Delete())"
+                                                  OnClick="@(() => CartService.RemoveFromCart(item.Product.Id))" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <FluentDivider Style="width: 100%; margin-bottom: 12px;" />
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <FluentLabel>Товары (@CartService.GetTotalCount() шт.)</FluentLabel>
+                        <FluentLabel Style="font-weight: 500;">@CartService.GetTotalSum().ToString("N0") руб.</FluentLabel>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                        <FluentLabel Style="font-size: 1.1rem; font-weight: bold;">Итого к оплате:</FluentLabel>
+                        <FluentLabel Style="font-size: 1.1rem; font-weight: bold; color: var(--accent);">
+                            @CartService.GetTotalSum().ToString("N0") руб.
+                        </FluentLabel>
+                    </div>
+                </FluentCard>
+            </FluentGridItem>
+
+        </FluentGrid>
+    }
+</div>
+
+@code {
+    private OrderModel _orderForm = new();
+    private bool _isOrderPlaced = false;
+    private bool _isSubmitting = false;
+
+    protected override void OnInitialized()
+    {
+        CartService.OnCartChanged += StateHasChanged;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (_isSubmitting)
+            return;
+
+        try
+        {
+            _isSubmitting = true;
+
+            await OrderService.CreateOrderAsync(_orderForm, CartService.Items);
+
+            CartService.ClearCart();
+
+            _isOrderPlaced = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при сохранении заказа: {ex.Message}");
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        CartService.OnCartChanged -= StateHasChanged;
+    }
+}

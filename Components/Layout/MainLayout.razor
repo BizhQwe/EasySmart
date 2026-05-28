@@ -1,0 +1,83 @@
+﻿@inherits LayoutComponentBase
+@implements IDisposable
+@using EasySmart.Services.Contracts
+@using EasySmart.Data.Enums
+@inject IUserSession Session
+@inject NavigationManager NavManager
+
+<FluentDesignTheme Mode="DesignThemeModes.Dark" OfficeColor="OfficeColor.Outlook" />
+
+<FluentLayout>
+    <FluentHeader>
+        <FluentStack Style="width: 100%; justify-content: space-between; align-items: center;">
+
+            <FluentStack VerticalAlignment="VerticalAlignment.Center" Spacing="3">
+                <img src="Images/Icons/EasySmart-Icon-32.png" style="height: 32px; width: 32px;" />
+
+                <FluentLabel Typo="Typography.PaneHeader" Style="font-size: 1.1rem; margin: 0;">
+                    <b>EasySmart</b>
+                    <span style="font-size: 0.85rem; font-weight: normal; opacity: 0.75;">
+                        — Интернет-магазин бытовой техники
+                    </span>
+                </FluentLabel>
+            </FluentStack>
+
+            <FluentStack VerticalAlignment="VerticalAlignment.Center" Spacing="3" Style="width: max-content;">
+                <FluentAnchor Href="catalog" Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size20.BoxMultiple())">
+                    Каталог
+                </FluentAnchor>
+
+                <FluentAnchor Href="checkout" Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size20.Cart())">
+                    Корзина
+                </FluentAnchor>
+
+                @if (Session.IsLoggedIn)
+                {
+                    @if (Session.CurrentUser?.Role == UserRole.Administrator)
+                    {
+                        <FluentAnchor Href="admin" Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size20.Settings())" Style="color: var(--accent);">
+                            Админ панель
+                        </FluentAnchor>
+                    }
+
+                    <FluentAnchor Href="profile" Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size20.Person())">
+                        @Session.CurrentUser?.FullName
+                    </FluentAnchor>
+
+                    <FluentButton Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size20.SignOut())" OnClick="Logout">
+                        Выйти
+                    </FluentButton>
+                }
+                else
+                {
+                    <FluentAnchor Href="login" Appearance="Appearance.Stealth" IconStart="@(new Icons.Regular.Size20.Person())">
+                        Войти
+                    </FluentAnchor>
+                }
+            </FluentStack>
+
+        </FluentStack>
+    </FluentHeader>
+
+    <div style="padding: 24px;">
+        @Body
+    </div>
+</FluentLayout>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Session.OnSessionChanged += StateHasChanged;
+    }
+
+    private void Logout()
+    {
+        Session.EndSession();
+        NavManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        Session.OnSessionChanged -= StateHasChanged;
+    }
+}

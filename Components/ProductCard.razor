@@ -1,0 +1,76 @@
+﻿@using EasySmart.Data.Entities
+@using EasySmart.Services.Contracts
+
+@inject ICartService CartService
+
+<FluentCard Style="display: flex; flex-direction: column; align-items: flex-start;">
+	<div style="align-self: center;">
+		<img src="@Product.Image" alt="@Product.Name" height="256" width="256" />
+	</div>
+
+	<FluentDivider Style="width: 100%;" />
+
+	<div style="width: 100%; height: 60px; display: flex; align-items: center; justify-content: center;">
+		<FluentLabel Typo="Typography.H5" Style="font-weight: bold; text-align: center;">
+			@Product.Name
+		</FluentLabel>
+	</div>
+
+	<FluentDivider Style="width: 100%; margin-bottom: 12px;" />
+
+	<FluentStack Orientation="Orientation.Vertical" Spacing="0" Style="width: 100%;">
+		<FluentLabel><b>Цена:</b> @Product.Price.ToString("C0")</FluentLabel>
+
+		<FluentLabel><b>Производитель:</b> @Product.Manufacturer?.Name</FluentLabel>
+
+		<FluentLabel><b>Модель:</b> @Product.Model</FluentLabel>
+
+		<FluentLabel><b>Мощность:</b> @Product.Power</FluentLabel>
+
+		<FluentLabel><b>Размер:</b> @Product.Dimensions</FluentLabel>
+
+		<FluentLabel><b>Описание:</b> @Product.Description</FluentLabel>
+	</FluentStack>
+
+	<FluentDivider Style="width: 100%; margin: 12px 0;" />
+
+	<div style="display: flex; justify-content: space-between; width: 100%;">
+		<FluentStack VerticalAlignment="VerticalAlignment.Center" Style="width: auto;">
+			<FluentButton @onclick="DecreaseQuantity">-</FluentButton>
+
+			<FluentLabel>@_quantity</FluentLabel>
+
+			<FluentButton @onclick="IncreaseQuantity">+</FluentButton>
+		</FluentStack>
+
+		<FluentButton IconStart="@(new Icons.Regular.Size20.Cart())" @onclick="AddToCart">
+			В корзину
+		</FluentButton>
+	</div>
+</FluentCard>
+
+@code {
+	[Parameter] public Product Product { get; set; } = default!;
+
+	private int _quantity = 1;
+
+	private void IncreaseQuantity() 
+	{ 
+		_quantity++; 
+	}
+
+	private void DecreaseQuantity() 
+	{
+		if (_quantity > 1)
+		{
+			_quantity--;
+		}
+	}
+
+	private void AddToCart() 
+	{ 
+		CartService.AddToCart(Product, _quantity);
+		Console.WriteLine($"Добавлено {_quantity} шт. товара {Product.Name}");
+		_quantity = 1;
+	}
+}

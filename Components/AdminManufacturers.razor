@@ -1,0 +1,64 @@
+﻿@using EasySmart.Data.Entities
+@using EasySmart.Services.Contracts
+
+@inject IProductService ProductService
+
+<div style="padding: 16px 0; display: flex; gap: 24px; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px;">
+        <FluentDataGrid Items="@_manufacturers.AsQueryable()">
+            <PropertyColumn Property="@(c => c.Id)" Title="ID" />
+            <PropertyColumn Property="@(c => c.Name)" Title="Название" />
+            <FluentStack VerticalAlignment="VerticalAlignment.Center">
+                <TemplateColumn Title="Действия">
+                    <FluentButton Appearance="Appearance.Stealth" Style="height: 20px;"  OnClick="() => _editingManufacturer = context">Ред.</FluentButton>
+                    <FluentButton Appearance="Appearance.Stealth" Style="height: 20px; color: red;" OnClick="() => DeleteManufacturerAsync(context.Id)">Удалить</FluentButton>
+                </TemplateColumn>
+            </FluentStack>
+        </FluentDataGrid>
+    </div>
+    <div style="width: 300px;">
+        <FluentCard>
+            <FluentLabel Typo="Typography.H6">@(_editingManufacturer.Id == 0 ? "Добавить" : "Редактировать")</FluentLabel>
+            <FluentTextField @bind-Value="_editingManufacturer.Name" Label="Название бренда" Style="width:100%; margin-top:8px;" />
+            <div style="margin-top: 16px; display: flex; gap: 8px;">
+                <FluentButton Appearance="Appearance.Accent" OnClick="SaveManufacturerAsync">Сохранить</FluentButton>
+                <FluentButton OnClick="() => _editingManufacturer = new Manufacturer()">Очистить</FluentButton>
+            </div>
+        </FluentCard>
+    </div>
+</div>
+
+@code {
+    private List<Manufacturer> _manufacturers = new();
+    private Manufacturer _editingManufacturer = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _manufacturers = await ProductService.GetManufacturersAsync();
+    }
+
+    private async Task SaveManufacturerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editingManufacturer.Name))
+            return;
+
+        if (_editingManufacturer.Id == 0)
+            await ProductService.CreateManufacturerAsync(_editingManufacturer);
+        else
+            await ProductService.UpdateManufacturerAsync(_editingManufacturer);
+
+        _editingManufacturer = new Manufacturer();
+        await LoadDataAsync();
+    }
+
+    private async Task DeleteManufacturerAsync(int id)
+    {
+        await ProductService.DeleteManufacturerAsync(id);
+        await LoadDataAsync();
+    }
+}

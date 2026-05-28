@@ -1,0 +1,50 @@
+﻿@using EasySmart.Data.Entities
+@using EasySmart.Data.Enums
+@using EasySmart.Services.Contracts
+
+@inject IOrderService OrderService
+
+<div style="padding: 16px 0;">
+    <FluentDataGrid Items="@_orders.AsQueryable()">
+        <PropertyColumn Property="@(o => o.Id)" Title="№" />
+        <PropertyColumn Property="@(o => o.OrderDate.ToString("dd.MM.yyyy HH:mm"))" Title="Дата" />
+        <PropertyColumn Property="@(o => o.ContactName)" Title="Покупатель" />
+        <PropertyColumn Property="@(o => o.TotalPrice)" Title="Сумма" />
+        <TemplateColumn Title="Статус">
+            <FluentStack VerticalAlignment="VerticalAlignment.Center">
+                <select @onchange="@((ChangeEventArgs e) => UpdateOrderStatusAsync(context.Id, e.Value?.ToString() ?? ""))"
+                        style="padding: 4px; border-radius: 4px; height: 20px; border: 1px solid #ccc;">
+                    @foreach (OrderStatus status in Enum.GetValues(typeof(OrderStatus)))
+                    {
+                        <option value="@status" selected="@(context.Status == status)">
+                            @status.ToString()
+                        </option>
+                    }
+                </select>
+            </FluentStack>
+        </TemplateColumn>
+    </FluentDataGrid>
+</div>
+
+@code {
+    private List<Order> _orders = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _orders = await OrderService.GetAllOrdersAsync();
+    }
+
+    private async Task UpdateOrderStatusAsync(int orderId, string statusStr)
+    {
+        if (Enum.TryParse<OrderStatus>(statusStr, out var newStatus))
+        {
+            await OrderService.UpdateOrderStatusAsync(orderId, newStatus);
+            await LoadDataAsync();
+        }
+    }
+}

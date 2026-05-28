@@ -1,0 +1,77 @@
+﻿@page "/login"
+
+@using EasySmart.Services.Models
+@using EasySmart.Services.Contracts
+@inject IUserService UserService
+@inject IUserSession Session
+@inject NavigationManager NavManager
+
+<div style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+    <FluentCard Style="padding: 32px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px;">
+
+        <FluentLabel Typo="Typography.H4" Style="text-align: center; margin-bottom: 8px;">
+            Вход в систему
+        </FluentLabel>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <FluentMessageBar Intent="MessageIntent.Error" AllowDismiss="false">
+                @_errorMessage
+            </FluentMessageBar>
+        }
+
+        <EditForm Model="@_loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <FluentTextField @bind-Value="_loginModel.Login" Label="Логин" Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _loginModel.Login)" Style="color: var(--error); font-size: 0.8rem;" />
+                </div>
+
+                <div>
+                    <FluentTextField TextFieldType="TextFieldType.Password" @bind-Value="_loginModel.Password" Label="Пароль" Style="width: 100%;" />
+                    <ValidationMessage For="@(() => _loginModel.Password)" Style="color: var(--error); font-size: 0.8rem;" />
+                </div>
+
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Style="width: 100%; margin-top: 8px;" Loading="@_isLoading">
+                    Войти
+                </FluentButton>
+            </div>
+        </EditForm>
+
+        <FluentDivider Style="width: 100%; margin: 16px 0;" />
+
+        <div style="text-align: center;">
+            <FluentLabel>Нет аккаунта?</FluentLabel>
+            <FluentAnchor Href="/register" Appearance="Appearance.Stealth">Зарегистрироваться</FluentAnchor>
+        </div>
+
+    </FluentCard>
+</div>
+
+@code {
+    private LoginModel _loginModel = new();
+    private string _errorMessage = string.Empty;
+    private bool _isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = string.Empty;
+        _isLoading = true;
+
+        var user = await UserService.LoginAsync(_loginModel.Login, _loginModel.Password);
+
+        if (user != null)
+        {
+            Session.StartSession(user);
+            NavManager.NavigateTo("/");
+        }
+        else
+        {
+            _errorMessage = "Неверный логин или пароль.";
+        }
+
+        _isLoading = false;
+    }
+}
